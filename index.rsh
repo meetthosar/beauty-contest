@@ -1,16 +1,16 @@
 'reach 0.1';
 
-const Finalist = Struct([
-    ['name' , Bytes(100)],
-    // ['url' , Bytes(500)],
-    ['addr' , Address]
-  ]);
+const Finalist = Object({
+  "name" : Bytes(100),
+  "addr" : Address
+});
 
 export const main = Reach.App(() => {
 
   // Judge Participant who will decide the finalist and winners
 
   const Judge = Participant('Judge', {
+    ready : Fun([], Null),
     getFinalists : Fun([],Tuple(Finalist, Finalist, Finalist)), // Will get finalists
     deadline : UInt,
     prizes : Fun([],Tuple(Token, UInt, Token, UInt, Token, UInt)), // Prizes tokens
@@ -24,9 +24,9 @@ export const main = Reach.App(() => {
   });
 
   //View to get finalists
-  const BeautyQueens = View('BeautyQueens', {  
+  /* const BeautyQueens = View('BeautyQueens', {  
     first : Finalist, second : Finalist, third : Finalist,
-  });
+  }); */
   init();
 
   // Judge's local step
@@ -57,9 +57,9 @@ export const main = Reach.App(() => {
     , amtSecond, thirdPrize, amtThird);
 
   // Set finalists
-  BeautyQueens.first.set(firstFinalist);
-  BeautyQueens.second.set(secondFinalist);
-  BeautyQueens.third.set(thirdFinalist);
+  // BeautyQueens.first.set(firstFinalist);
+  // BeautyQueens.second.set(secondFinalist);
+  // BeautyQueens.third.set(thirdFinalist);
   commit();
 
   // Judges pay prizes to contract
@@ -111,9 +111,9 @@ export const main = Reach.App(() => {
   transfer(balance(secondPrize), secondPrize).to(secondAddress);
   transfer(balance(thirdPrize), thirdPrize).to(thirdAddress);
 
-  // transfer(balance(firstPrize), firstPrize).to(Judge);
-  // transfer(balance(secondPrize), secondPrize).to(Judge);
-  // transfer(balance(thirdPrize), thirdPrize).to(Judge);
+  transfer(balance(firstPrize), firstPrize).to(Judge);
+  transfer(balance(secondPrize), secondPrize).to(Judge);
+  transfer(balance(thirdPrize), thirdPrize).to(Judge);
   transfer(balance()).to(Judge);
 
   

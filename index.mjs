@@ -13,18 +13,18 @@ console.log('Welcome to Miss India 2022');
 
 const firstFinalist = {
   'name' : "Aishwarya Rai",
-  'address' : firstAcc.getAddress()
-};
+  'addr' : firstAcc.getAddress()
+} ;
 
 const secondFinalist = {
   'name' : "Sushmita Sen",
-  'address' : secondAcc.getAddress()
-};
+  'addr' : secondAcc.getAddress()
+} ;
+
 const thirdFinalist = {
   'name' : "Lara Datta",
-  'address' : thirdAcc.getAddress()
-};
-
+  'addr' : thirdAcc.getAddress()
+} ;
 
 
 console.log('Judge is deploying contract ...');
@@ -60,22 +60,6 @@ const winner = await stdlib.launchToken(judgeAcc, 'missindia', "MSINDIA")
 
 console.log('Starting backends...');
 
-const getFinalistAddress = (key) => {
-   let address = null;
-    switch (key) {
-      case 0:
-        address  = ctcJudge.v.BeautyQueens.first.addr
-        break;
-
-      case 1:
-        address  = ctcJudge.v.BeautyQueens.second.addr
-        break;  
-    
-      case 2:
-        address  = ctcJudge.v.BeautyQueens.third.addr
-        break;
-    }
-}
 
 
   const [voter1, voter2, voter3, voter4, voter5] =  await stdlib.newTestAccounts(5, startingBalance);
@@ -83,14 +67,17 @@ const getFinalistAddress = (key) => {
 
   const voter = async (who, index, vote1, vote2, vote3) => {
     const ctcVote = who.contract(backend, ctcJudge.getInfo());
-    console.log(`Voter ${index} Checked profile of ${ctcVote.v.BeautyQueens.first.name}`)
-    console.log(`Voter ${index} Checked profile of ${ctcVote.v.BeautyQueens.second.name}`)
-    console.log(`Voter ${index} Checked profile of ${ctcVote.v.BeautyQueens.second.name}`)
+    console.log(`Voter ${index} Checked profile of ${firstFinalist.name}`)
+    console.log(`Voter ${index} Checked profile of ${secondFinalist.name}`)
+    console.log(`Voter ${index} Checked profile of ${thirdFinalist.name}`)
     ctcVote.apis.Voters.voteBeautyQueen(who,vote1, vote2, vote3);
   };
 
 
   backend.Judge(ctcJudge, {
+    ready : () => {
+      console.log("Voting opened");
+    },
 
      getFinalists : () => {
         return [Object(firstFinalist), Object(secondFinalist), Object(thirdFinalist)];
@@ -125,42 +112,64 @@ const getFinalistAddress = (key) => {
       // const amtThird = stdlib.parseCurrency(1)
     
 
-      return [winner, amtFirst, runner1, amtSecond, runner2, amtThird ];
+      return [winner.id, 3, runner1.id, 2, runner2.id, 1 ];
     },
     
     deadline : deadline,
 
-    checkVotes : (firstVotes, secondVotes, thirdVotes) => {
-        const votes = [firstVotes, secondVotes, thirdVotes];
+    checkVotes : async (firstVotes, secondVotes, thirdVotes) => {
+      
+        var votes = [JSON.parse(firstVotes), JSON.parse(secondVotes), JSON.parse(thirdVotes)];
+        
+        const winner =  Math.max(...votes);
+        const winnerkey =  votes.indexOf(Math.max(...votes));
+        votes[winnerkey] = -1;
 
-        let winner = Math.max(votes);
-        let winnerkey = votes.indexOf(winner);
-        votes.splice(winnerkey, 1);
-
-        let runner1 = Math.max(votes);
+        let runner1 = Math.max(...votes);
         let runner1key = votes.indexOf(runner1);
-        votes.splice(runner1key)
+        votes[runner1key] = -2;
 
-        let runner2 = Math.max(votes);
+        let runner2 = Math.max(...votes);
         let runner2key = votes.indexOf(runner2);
-        votes.splice(runner2key, 1);
+        votes[runner2key] = -3;
 
-        return [getFinalistAddress(winner), getFinalistAddress(runner1), getFinalistAddress(runner2)]
+        const getFinalistAddress = (key) => {
+          let address = null;
+           switch (key) {
+             case 0:
+               address  = firstFinalist.addr
+               break;
+       
+             case 1:
+               address  = secondFinalist.addr
+               break;  
+           
+             case 2:
+               address  = thirdFinalist.addr
+               break;
+           }
+           return address;
+       }
+
+       
+        return [getFinalistAddress(winnerkey), getFinalistAddress(runner1key), getFinalistAddress(runner2key)]
     }
   });
-;
-  console.log(`Before voting ${firstFinalist.name} has token balance ${firstAcc.balancesOf([winner, runner1, runner2])}`);
-  console.log(`Before voting ${secondFinalist.name} has token balance ${secondAcc.balancesOf([winner, runner1, runner2])}`);
-  console.log(`Before voting ${thirdFinalist.name} has token balance ${thirdAcc.balancesOf([winner, runner1, runner2])}`);
-  await voter(voter1, 1,0,0);
-  await voter(voter2, 1,0,0);
-  await voter(voter3, 1,0,0);
-  await voter(voter4, 1,1,0);
-  await voter(voter5, 1,0,1);
+
+  
+  console.log(`Before voting ${firstFinalist.name} has token balance  ${await firstAcc.balancesOf([stdlib.bigNumberify(winner.id), stdlib.bigNumberify(runner1.id), stdlib.bigNumberify(runner2.id)])}`);
+  console.log(`Before voting ${secondFinalist.name} has token balance ${await secondAcc.balancesOf([winner.id, runner1.id, runner2.id])}`);
+  console.log(`Before voting ${thirdFinalist.name} has token balance ${await thirdAcc.balancesOf([winner.id, runner1.id, runner2.id])}`);
+  
+  await voter(voter1,1, 1,0,0);
+  await voter(voter2,2, 1,0,0);
+  await voter(voter3,3, 1,0,0);
+  await voter(voter4,4, 0,1,0);
+  await voter(voter5,5, 0,0,1);
   console.log('Voting is closed now');
 
   console.log('Counting the Votes');
 
-  console.log(`After voting ${firstFinalist.name} has token balance ${firstAcc.balancesOf([winner, runner1, runner2])}`);
-  console.log(`After voting ${secondFinalist.name} has token balance ${secondAcc.balancesOf([winner, runner1, runner2])}`);
-  console.log(`After voting ${thirdFinalist.name} has token balance ${thirdAcc.balancesOf([winner, runner1, runner2])}`);
+  console.log(`After voting ${firstFinalist.name} has token balance  ${await firstAcc.balancesOf([stdlib.bigNumberify(winner.id), stdlib.bigNumberify(runner1.id), stdlib.bigNumberify(runner2.id)])}`);
+  console.log(`After voting ${secondFinalist.name} has token balance ${await secondAcc.balancesOf([winner.id, runner1.id, runner2.id])}`);
+  console.log(`After voting ${thirdFinalist.name} has token balance ${await thirdAcc.balancesOf([winner.id, runner1.id, runner2.id])}`);
