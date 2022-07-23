@@ -13,7 +13,7 @@ export const main = Reach.App(() => {
   const Judge = Participant('Judge', {
     getFinalists : Fun([],Tuple(Finalist, Finalist, Finalist)), // Will get finalists
     deadline : UInt,
-    prizes : Fun([],Tuple(Token,UInt,UInt,UInt)), // Prizes tokens
+    prizes : Fun([],Tuple(Token, UInt, Token, UInt, Token, UInt)), // Prizes tokens
     checkVotes : Fun([UInt, UInt, UInt],Tuple(Address, Address, Address)), // Check votes for each finalist
   });
 
@@ -37,21 +37,24 @@ export const main = Reach.App(() => {
     const deadline = declassify(interact.deadline);
 
     // Prizes for winner places
-    const [prize, amtFirst, amtSecond, amtThird] = declassify(interact.prizes());
+    const [firstPrize, amtFirst, secondPrize, amtSecond, thirdPrize, amtThird] = declassify(interact.prizes());
     
-    // assume(firstPrize != secondPrize);
-    // assume(secondPrize != thirdPrize);
-    // assume(firstPrize != thirdPrize);
+    assume(firstPrize != secondPrize);
+    assume(secondPrize != thirdPrize);
+    assume(firstPrize != thirdPrize);
     
     check(amtFirst != 0);
     check(amtSecond != 0);
     check(amtThird != 0);
+    // check(amttotal > amtFirst);
+    // check(amttotal > amtSecond);
+    // check(amttotal > amtThird)
   });
 
   // Judge publishes
   Judge.publish(firstFinalist, secondFinalist, 
-    thirdFinalist, deadline, prize, amtFirst
-    , amtSecond, amtThird);
+    thirdFinalist, deadline, firstPrize, amtFirst, secondPrize
+    , amtSecond, thirdPrize, amtThird);
 
   // Set finalists
   BeautyQueens.first.set(firstFinalist);
@@ -60,11 +63,11 @@ export const main = Reach.App(() => {
   commit();
 
   // Judges pay prizes to contract
-  Judge.pay([[amtFirst,prize],[amtSecond, prize], [amtThird, prize]]);
+  Judge.pay([[amtFirst, firstPrize], [amtSecond, secondPrize], [amtThird, thirdPrize]]);
 
 
   const end = lastConsensusTime() + deadline;
-  const totalVotes = 10;
+  const totalVotes = 5;
   const voterSet = new Set();
   
   // Count votes for finalists
@@ -104,11 +107,13 @@ export const main = Reach.App(() => {
   // The second one to publish always attaches
 
   // Transfer prizes to the winners
-  transfer(amtFirst, prize).to(firstAddr);
-  transfer(amtSecond, prize).to(secondAddress);
-  transfer(amtThird, prize).to(thirdAddress);
+  transfer(balance(firstPrize), firstPrize).to(firstAddr);
+  transfer(balance(secondPrize), secondPrize).to(secondAddress);
+  transfer(balance(thirdPrize), thirdPrize).to(thirdAddress);
 
-  transfer(balance(prize), prize).to(Judge);
+  // transfer(balance(firstPrize), firstPrize).to(Judge);
+  // transfer(balance(secondPrize), secondPrize).to(Judge);
+  // transfer(balance(thirdPrize), thirdPrize).to(Judge);
   transfer(balance()).to(Judge);
 
   
