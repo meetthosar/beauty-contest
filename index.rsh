@@ -28,6 +28,7 @@ export const main = Reach.App(() => {
     first : Finalist, second : Finalist, third : Finalist,
   }); */
   init();
+  Judge.interact.ready();
 
   // Judge's local step
   Judge.only(() => {
@@ -65,6 +66,7 @@ export const main = Reach.App(() => {
   // Judges pay prizes to contract
   Judge.pay([[amtFirst, firstPrize], [amtSecond, secondPrize], [amtThird, thirdPrize]]);
 
+  
 
   const end = lastConsensusTime() + deadline;
   const totalVotes = 5;
